@@ -3,12 +3,7 @@ package com.example.parcial2
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import com.example.parcial2.Screens.*
@@ -29,43 +24,56 @@ class MainActivity : ComponentActivity() {
                         onDetalle = { id -> navController.navigate("detalle/$id") }
                     )
                 }
+
                 composable("agregar") {
                     AgregarProducto(viewModel) {
+                        // Asegúrate de que se hace popBackStack correctamente después de agregar un producto
                         navController.popBackStack()
                     }
                 }
+
                 composable("carrito") {
                     CarroCompras(viewModel) {
+                        // PopBackStack después de realizar alguna acción en el carrito
                         navController.popBackStack()
                     }
                 }
+
                 composable("detalle/{id}") { backStackEntry ->
+                    // Asegúrate de que el ID es válido y maneja el caso cuando no lo sea
                     val id = backStackEntry.arguments?.getString("id")?.toIntOrNull()
                     if (id != null) {
-                        DetalleProducto(viewModel, id) {
-                            navController.popBackStack()
+                        val producto = viewModel.obtenerProductoPorId(id)
+                        if (producto != null) {
+                            DetalleProducto(viewModel, id) {
+                                // PopBackStack después de ver detalles del producto
+                                navController.popBackStack()
+                            }
+                        } else {
+                            // Si el producto no existe, navega a la pantalla de error
+                            LaunchedEffect(Unit) {
+                                navController.navigate("error/Producto no encontrado")
+                            }
                         }
                     } else {
-                        // Redirige a una pantalla de error si el ID es inválido
-                        navController.navigate("error")
+                        // Si el ID no es válido, navega a la pantalla de error
+                        LaunchedEffect(Unit) {
+                            navController.navigate("error/ID inválido")
+                        }
                     }
                 }
-                composable("error") {
-                    ErrorScreen("Error: ID inválido")
+
+                composable("error/{mensaje}") { backStackEntry ->
+                    val mensaje = backStackEntry.arguments?.getString("mensaje") ?: "Error desconocido"
+                    ErrorScreen(mensaje) {
+                        // Después de mostrar el error, regresa al catálogo
+                        navController.navigate("catalogo") {
+                            popUpTo("catalogo") { inclusive = true }
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-@Composable
-fun ErrorScreen(message: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = message)
-    }
-}

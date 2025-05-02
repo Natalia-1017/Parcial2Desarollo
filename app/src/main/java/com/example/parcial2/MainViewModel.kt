@@ -1,33 +1,46 @@
 package com.example.parcial2
 
-
-import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 
 class MainViewModel : ViewModel() {
-    var productos by mutableStateOf(listOf<Producto>())
-        private set
 
-    var carrito by mutableStateOf(listOf<Producto>())
-        private set
+    val productos = mutableStateListOf<Producto>()
+    val carrito = mutableStateListOf<Producto>()
+
+    private val _nuevosProductos = mutableStateListOf<Int>() // IDs de productos nuevos
+    val nuevosProductos: List<Int> get() = _nuevosProductos
 
     fun agregarProducto(producto: Producto) {
-        productos = productos + producto
+        productos.add(producto)
+        _nuevosProductos.add(producto.id)
+    }
+
+    fun marcarProductoProcesado(id: Int) {
+        _nuevosProductos.remove(id)
     }
 
     fun agregarAlCarrito(producto: Producto) {
-        carrito = carrito + producto
+        carrito.add(producto)
+    }
+
+    fun eliminarDelCarrito(producto: Producto) {
+        carrito.remove(producto)
+    }
+
+    fun limpiarCarrito() {
+        carrito.clear()
+    }
+
+    fun obtenerProductoPorId(id: Int): Producto? {
+        return productos.find { it.id == id }
     }
 
     fun totalCarrito(): Double {
         return carrito.sumOf { it.precio }
     }
 
-    fun limpiarCarrito() {
-        carrito = emptyList()
-    }
-
-    fun obtenerProductoPorId(id: Int): Producto? {
-        return productos.find { it.id == id }
+    fun cantidadProductosCarrito(): Int {
+        return carrito.size
     }
 }
